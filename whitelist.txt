@@ -1,0 +1,10 @@
+# Whitelist for HyperOS SF Bypass
+# Add one package name per line
+# Examples:
+# com.android.systemui
+# com.miui.screenrecorder
+# com.example.yourapp
+
+# 默认白名单应用（可根据需要添加）
+com.android.systemui
+com.miui.screenrecorder

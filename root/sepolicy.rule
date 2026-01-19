@@ -1,0 +1,10 @@
+# Allow SF to access module directory
+allow surfaceflinger magisk_file:dir { search };
+allow surfaceflinger magisk_file:file { read open getattr };
+
+# Allow SF to identify calling apps
+allow surfaceflinger { untrusted_app priv_app platform_app system_app }:dir { search };
+allow surfaceflinger { untrusted_app priv_app platform_app system_app }:file { read open getattr };
+
+# Allow Binder identity checks
+allow surfaceflinger self:capability { sys_ptrace };

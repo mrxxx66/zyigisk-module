@@ -1,0 +1,104 @@
+name: Build and Release HyperOS-SF-Bypass
+
+on:
+  push:
+    tags:
+      - 'v*'  # 推送版本标签时触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    - name: Set up Android NDK
+      uses: android-actions/setup-android@v2
+      with:
+        ndk-version: '25.2.9519653'  # NDK r25c
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git cmake ninja-build
+        
+    - name: Clone Dobby library
+      run: |
+        git clone https://github.com/jmpews/Dobby.git jni/external/dobby
+        cd jni/external/dobby
+        git checkout v2023.11.23
+        
+    - name: Build Dobby for Android
+      run: |
+        cd jni/external/dobby
+        mkdir -p build && cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-31 \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DDOBBY_DEBUG=OFF
+        cmake --build . --config Release -- -j$(nproc)
+        
+    - name: Build module
+      run: |
+        cd jni
+        # 使用ndk-build
+        $ANDROID_NDK_ROOT/ndk-build \
+          NDK_PROJECT_PATH=. \
+          NDK_APPLICATION_MK=Application.mk \
+          APP_BUILD_SCRIPT=Android.mk \
+          APP_ABI=arm64-v8a \
+          NDK_DEBUG=0
+        
+    - name: Create module structure
+      run: |
+        # 创建模块目录结构
+        mkdir -p hyperos_sf_bypass
+        mkdir -p hyperos_sf_bypass/lib/arm64-v8a
+        
+        # 复制编译的库
+        cp jni/libs/arm64-v8a/lsfbypass.so hyperos_sf_bypass/lib/arm64-v8a/libsfbypass.so
+        
+        # 复制配置文件
+        cp assets/zygisk_next.xml hyperos_sf_bypass/
+        cp root/module.prop hyperos_sf_bypass/
+        cp root/sepolicy.rule hyperos_sf_bypass/
+        cp root/service.sh hyperos_sf_bypass/
+        
+        # 创建默认白名单文件
+        echo "# Whitelist for HyperOS SF Bypass
+# Add one package name per line
+# Examples:
+# com.android.systemui
+# com.miui.screenrecorder
+# com.example.yourapp" > hyperos_sf_bypass/whitelist.txt
+        
+    - name: Create ZIP package
+      run: |
+        # 获取版本号（从标签）
+        VERSION=${GITHUB_REF#refs/tags/v}
+        ZIP_NAME="HyperOS_SF_Bypass_v${VERSION}.zip"
+        
+        # 打包模块
+        cd hyperos_sf_bypass
+        zip -r ../$ZIP_NAME .
+        
+        # 输出ZIP文件路径
+        echo "ZIP_FILE=$ZIP_NAME" >> $GITHUB_ENV
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ${{ env.ZIP_FILE }}
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: hyperos-sf-bypass-module
+        path: ${{ env.ZIP_FILE }}
