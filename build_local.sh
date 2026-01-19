@@ -18,7 +18,7 @@ if [ ! -d "jni/external/dobby" ]; then
     echo "Cloning Dobby library..."
     git clone https://github.com/jmpews/Dobby.git jni/external/dobby
     cd jni/external/dobby
-    git checkout v2023.11.23
+    git checkout latest
     cd ../../..
 else
     echo "Dobby library already cloned."

@@ -55,7 +55,7 @@ This module hooks into the `surfaceflinger` process and intercepts calls to `and
    ```bash
    git clone https://github.com/jmpews/Dobby.git jni/external/dobby
    cd jni/external/dobby
-   git checkout v2023.11.23
+   git checkout latest
    cd ../..
    ```
 
