@@ -1,7 +1,7 @@
 id=hyperos_sf_bypass
 name=HyperOS SurfaceFlinger Screenshot Bypass
-version=v1.0.2
-versionCode=2
+version=v1.0.3
+versionCode=3
 author=HyperOS-SF-Bypass Team
 description=ZygiskNext module to bypass HyperOS screenshot restrictions by hooking MiSurfaceFlingerStub::isCallingBySystemui
 updateJson=https://raw.githubusercontent.com/yourusername/hyperos-sf-bypass/main/update.json
