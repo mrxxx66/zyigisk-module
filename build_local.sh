@@ -24,6 +24,11 @@ else
     echo "Dobby library already cloned."
 fi
 
+# Apply Dobby fixes
+echo "Applying Dobby fixes..."
+chmod +x apply_dobby_fixes.sh
+./apply_dobby_fixes.sh
+
 # Build Dobby
 if [ ! -f "jni/external/dobby/build/libdobby.a" ]; then
     echo "Building Dobby library..."

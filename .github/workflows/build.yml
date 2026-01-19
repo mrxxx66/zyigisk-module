@@ -29,6 +29,12 @@ jobs:
         cd jni/external/dobby
         git checkout latest
         
+    - name: Apply Dobby fixes
+      run: |
+        # 应用关键修复以确保构建成功
+        chmod +x ../../apply_dobby_fixes.sh
+        ../../apply_dobby_fixes.sh
+        
     - name: Build Dobby for Android
       run: |
         # 显示NDK信息用于调试
