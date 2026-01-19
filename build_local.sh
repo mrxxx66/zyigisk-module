@@ -31,20 +31,23 @@ if [ ! -f "jni/external/dobby/build/libdobby.a" ]; then
     mkdir -p build
     cd build
     
-    # 为Android arm64-v8a构建Dobby静态库
-    # 使用与主模块相同的工具链和平台设置
-    echo "Configuring Dobby build with CMake..."
-    cmake .. \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
-        -DANDROID_ABI=arm64-v8a \
-        -DANDROID_PLATFORM=android-31 \
-        -DANDROID_STL=c++_static \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DDOBBY_DEBUG=OFF \
-        -DDOBBY_EXAMPLE=OFF \
-        -DDOBBY_TEST=OFF \
-        -G Ninja
+        # 为Android arm64-v8a构建Dobby静态库
+        # 使用与主模块相同的工具链和平台设置
+        # 添加 -DANDROID_TOOLCHAIN=clang 和 -DANDROID_LD=lld 以使用现代工具链
+        echo "Configuring Dobby build with CMake..."
+        cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-31 \
+            -DANDROID_STL=c++_static \
+            -DANDROID_TOOLCHAIN=clang \
+            -DANDROID_LD=lld \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DDOBBY_DEBUG=OFF \
+            -DDOBBY_EXAMPLE=OFF \
+            -DDOBBY_TEST=OFF \
+            -G Ninja
     
     if [ $? -eq 0 ]; then
         echo "Building Dobby..."
