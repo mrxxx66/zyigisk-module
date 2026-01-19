@@ -41,8 +41,15 @@ jobs:
     - name: Apply Dobby fixes
       run: |
         # 应用关键修复以确保构建成功
-        # 返回到项目根目录
-        cd ../..
+        # 首先确保我们在项目根目录
+        cd $GITHUB_WORKSPACE
+        echo "Current directory: $(pwd)"
+        echo "Listing files in current directory:"
+        ls -la
+        echo "Checking if apply_dobby_fixes.sh exists:"
+        ls -la apply_dobby_fixes.sh || echo "File not found"
+        
+        # 确保脚本可执行并运行
         chmod +x apply_dobby_fixes.sh
         ./apply_dobby_fixes.sh
         
