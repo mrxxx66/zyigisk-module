@@ -11,7 +11,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up Android NDK
       uses: android-actions/setup-android@v2
@@ -33,25 +33,103 @@ jobs:
       run: |
         cd jni/external/dobby
         mkdir -p build && cd build
+        
+        # 为Android arm64-v8a构建Dobby静态库
+        # 使用与主模块相同的工具链和平台设置
         cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=arm64-v8a \
           -DANDROID_PLATFORM=android-31 \
+          -DANDROID_STL=c++_static \
           -DBUILD_SHARED_LIBS=OFF \
-          -DDOBBY_DEBUG=OFF
-        cmake --build . --config Release -- -j$(nproc)
+          -DDOBBY_DEBUG=OFF \
+          -DDOBBY_EXAMPLE=OFF \
+          -DDOBBY_TEST=OFF \
+          -G Ninja
+        
+        # 使用Ninja进行构建（更快且输出更清晰）
+        cmake --build . --config Release --target dobby
+        
+        # 验证构建是否成功 - Dobby可能将库输出到不同位置
+        if [ -f "libdobby.a" ]; then
+          echo "Found libdobby.a in build root directory"
+        elif [ -f "source/libdobby.a" ]; then
+          echo "Found libdobby.a in source/ directory"
+          cp source/libdobby.a libdobby.a
+        elif [ -f "builtin-plugin/libdobby.a" ]; then
+          echo "Found libdobby.a in builtin-plugin/ directory"
+          cp builtin-plugin/libdobby.a libdobby.a
+        else
+          echo "Error: libdobby.a not found after build"
+          echo "Searching for any .a files:"
+          find . -name "*.a" -type f
+          exit 1
+        fi
+        
+        # 确保库在期望的位置
+        # 我们当前在 jni/external/dobby/build，需要复制到 jni/external/dobby/build/libdobby.a
+        # 这已经是正确的位置，但我们可能需要确保它存在
+        if [ ! -f "libdobby.a" ]; then
+          echo "Error: libdobby.a not created properly"
+          exit 1
+        fi
+        echo "Dobby built successfully: $(pwd)/libdobby.a"
+        echo "Library size: $(stat -c%s libdobby.a) bytes"
+        
+        # 验证库是有效的静态库
+        if file libdobby.a | grep -q "ar archive"; then
+          echo "Library verified as valid ar archive"
+        else
+          echo "Warning: libdobby.a doesn't appear to be a valid ar archive"
+          file libdobby.a
+        fi
         
     - name: Build module
       run: |
         cd jni
-        # 使用ndk-build
+        # 验证libdobby.a是否存在
+        if [ ! -f "external/dobby/build/libdobby.a" ]; then
+          echo "Error: libdobby.a not found at expected location"
+          echo "Trying to find it..."
+          find . -name "libdobby.a" -type f | head -5
+          exit 1
+        fi
+        
+        echo "Starting module build with ndk-build..."
+        echo "ANDROID_NDK_ROOT: $ANDROID_NDK_ROOT"
+        echo "Current directory: $(pwd)"
+        
+        # 使用ndk-build，添加详细输出
         $ANDROID_NDK_ROOT/ndk-build \
           NDK_PROJECT_PATH=. \
           NDK_APPLICATION_MK=Application.mk \
           APP_BUILD_SCRIPT=Android.mk \
           APP_ABI=arm64-v8a \
-          NDK_DEBUG=0
+          APP_STL=c++_static \
+          NDK_DEBUG=0 \
+          V=1 2>&1 | tee build.log
+        
+        # 检查构建结果
+        if [ $? -eq 0 ]; then
+          echo "ndk-build completed successfully"
+        else
+          echo "ndk-build failed with exit code $?"
+          echo "Build log (last 50 lines):"
+          tail -50 build.log
+          exit 1
+        fi
+        
+        # 验证构建输出
+        if [ -f "libs/arm64-v8a/lsfbypass.so" ]; then
+          echo "Module built successfully: libs/arm64-v8a/lsfbypass.so"
+          file libs/arm64-v8a/lsfbypass.so
+        else
+          echo "Error: lsfbypass.so not found after build"
+          echo "Looking for other .so files..."
+          find . -name "*.so" -type f
+          exit 1
+        fi
         
     - name: Create module structure
       run: |
@@ -98,7 +176,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: hyperos-sf-bypass-module
         path: ${{ env.ZIP_FILE }}

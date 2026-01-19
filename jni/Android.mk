@@ -13,8 +13,9 @@ LOCAL_SRC_FILES := \
     utils.cpp
 
 # C++标准
-LOCAL_CPPFLAGS := -std=c++17 -frtti -fexceptions
+LOCAL_CPPFLAGS := -std=c++17 -frtti -fexceptions -Wno-unused-variable -Wno-unused-function
 LOCAL_CFLAGS := -DANDROID -DLOG_TAG=\"SFBypass_ZNext\"
+LOCAL_LDFLAGS := -latomic  # 某些C++17特性可能需要atomic库
 
 # Dobby头文件路径
 LOCAL_C_INCLUDES := \
