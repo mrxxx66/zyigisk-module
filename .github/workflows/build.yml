@@ -14,9 +14,18 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Android NDK
-      uses: android-actions/setup-android@v1
-      with:
-        ndk-version: '25.2.9519653'  # NDK r25c
+      run: |
+        # 下载并安装Android NDK r25c
+        wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+        unzip -q android-ndk-r25c-linux.zip
+        echo "ANDROID_NDK_ROOT=$PWD/android-ndk-r25c" >> $GITHUB_ENV
+        echo "ANDROID_HOME=$PWD/android-ndk-r25c" >> $GITHUB_ENV
+        echo "ANDROID_SDK_ROOT=$PWD/android-ndk-r25c" >> $GITHUB_ENV
+        echo "$PWD/android-ndk-r25c" >> $GITHUB_PATH
+        echo "$PWD/android-ndk-r25c/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+        echo "$PWD/android-ndk-r25c" >> $GITHUB_PATH
+        echo "Android NDK installed at: $PWD/android-ndk-r25c"
+        ls -la android-ndk-r25c/
         
     - name: Install dependencies
       run: |
