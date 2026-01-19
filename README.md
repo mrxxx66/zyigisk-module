@@ -91,6 +91,8 @@ The repository includes GitHub Actions workflow that automatically:
 - Creates a Magisk module ZIP package
 - Publishes a GitHub release with the module
 
+**To trigger a build**: Push a version tag (e.g., `git tag v1.0.0 && git push origin v1.0.0`)
+
 ## Installation
 
 1. Download the latest release ZIP from the [Releases](https://github.com/yourusername/hyperos-sf-bypass/releases) page
